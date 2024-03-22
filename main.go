@@ -1,38 +1,31 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
+	"strings"
+
+	"github.com/lancer2672/Dandelion_Gateway/utils"
 )
 
 func main() {
+	config, err := utils.LoadConfig(".")
+	if err != nil {
+		log.Fatal("Cannot load config", err)
+	}
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/serviceA":
-			serveReverseProxy("http://localhost:8081", w, r)
-		case "/serviceB":
-			serveReverseProxy("http://localhost:8082", w, r)
-		case "/serviceC":
-			serveReverseProxy("http://localhost:8083", w, r)
+		fmt.Println("URL PATH", r.URL.Path)
+		switch {
+		case strings.HasPrefix(r.URL.Path, "/notification"):
+			http.Redirect(w, r, config.NotificationServiceAddress+r.URL.Path, http.StatusFound)
+		case strings.HasPrefix(r.URL.Path, "/movie"):
+			http.Redirect(w, r, config.MovieGRPCAddress+r.URL.Path, http.StatusFound)
 		default:
-			http.Error(w, "Service not found", 404)
+			http.Redirect(w, r, config.MainServiceAddress+r.URL.Path, http.StatusFound)
 		}
 	})
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
-}
-
-func serveReverseProxy(target string, w http.ResponseWriter, r *http.Request) {
-	url, _ := url.Parse(target)
-
-	proxy := httputil.NewSingleHostReverseProxy(url)
-
-	r.URL.Host = url.Host
-	r.URL.Scheme = url.Scheme
-	r.Header.Set("X-Forwarded-Host", r.Header.Get("Host"))
-	r.Host = url.Host
-
-	proxy.ServeHTTP(w, r)
+	log.Fatal(http.ListenAndServe(config.GatewayAddress, nil))
 }
