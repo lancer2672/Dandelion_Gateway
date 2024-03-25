@@ -2,7 +2,11 @@ module github.com/lancer2672/Dandelion_Gateway
 
 go 1.22.1
 
-require github.com/spf13/viper v1.18.2
+require (
+	github.com/go-chi/chi v1.5.5
+	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/spf13/viper v1.18.2
+)
 
 require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect

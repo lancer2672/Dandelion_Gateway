@@ -1,3 +1,3 @@
 package utils
 
-const API_KEY = "x-api-key"
+const API_KEY = "X-Api-Key"
