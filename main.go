@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -31,11 +29,11 @@ func main() {
 	}
 
 	Routes = []Route{
-		{"/notification", config.NotificationServiceAddress},
-		{"/movies", config.MovieGRPCAddress},
+		{"/notification/*", config.NotificationServiceAddress},
+		{"/movies/*", config.MovieGRPCAddress},
 		{"/api/auth/login", config.MainServiceAddress},
 		{"/api/auth/register", config.MainServiceAddress},
-		{"/", config.MainServiceAddress},
+		{"/*", config.MainServiceAddress},
 	}
 
 	r := chi.NewRouter()
@@ -47,7 +45,8 @@ func main() {
 			forwardRequest(route.BackendURL, w, r)
 		}))
 
-		if !utils.StringContains(noAuthRoutes, route.PathPrefix) {
+		if utils.StringContains(noAuthRoutes, route.PathPrefix) {
+			log.Println("NoAuthRoute", route.PathPrefix)
 			handler = middleware.VerifyToken(handler)
 		}
 
@@ -62,32 +61,33 @@ func main() {
 
 func forwardRequest(target string, w http.ResponseWriter, r *http.Request) {
 	url, err := url.Parse(target)
+	log.Println("URL", url)
 	if err != nil {
 		http.Error(w, "Invalid target URL", http.StatusInternalServerError)
 		return
 	}
-	//TODO: understand this
 	proxy := httputil.NewSingleHostReverseProxy(url)
 	r.URL.Host = url.Host
 	r.URL.Scheme = url.Scheme
 	r.Header.Set("X-Forwarded-Host", r.Host)
 	proxy.ServeHTTP(w, r)
-	proxy.ModifyResponse = rewriteBody
+	// proxy.ModifyResponse = rewriteBody
 }
-func rewriteBody(resp *http.Response) (err error) {
-	b, err := io.ReadAll(resp.Body) //Read html
-	if err != nil {
-		return err
-	}
-	err = resp.Body.Close()
-	if err != nil {
-		return err
-	}
-	fmt.Println("RewriteBody", b)
-	// b = bytes.Replace(b, []byte("server"), []byte("schmerver"), -1) // replace html
-	// body := io.NopCloser(bytes.NewReader(b))
-	// resp.Body = body
-	// resp.ContentLength = int64(len(b))
-	// resp.Header.Set("Content-Length", strconv.Itoa(len(b)))
-	return nil
-}
+
+// func rewriteBody(resp *http.Response) (err error) {
+// 	b, err := io.ReadAll(resp.Body) //Read html
+// 	if err != nil {
+// 		return err
+// 	}
+// 	err = resp.Body.Close()
+// 	if err != nil {
+// 		return err
+// 	}
+// 	fmt.Println("RewriteBody", b)
+// 	// b = bytes.Replace(b, []byte("server"), []byte("schmerver"), -1) // replace html
+// 	// body := io.NopCloser(bytes.NewReader(b))
+// 	// resp.Body = body
+// 	// resp.ContentLength = int64(len(b))
+// 	// resp.Header.Set("Content-Length", strconv.Itoa(len(b)))
+// 	return nil
+// }
