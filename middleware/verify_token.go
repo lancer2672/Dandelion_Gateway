@@ -58,10 +58,9 @@ func VerifyToken(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "claims", claims)
+		ctx := context.WithValue(r.Context(), "payload", claims)
 		r = r.WithContext(ctx)
 		fmt.Println(claims)
-		next.ServeHTTP(w, r)
 		next.ServeHTTP(w, r)
 	})
 }
