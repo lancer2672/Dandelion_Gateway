@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/lancer2672/Dandelion_Gateway/internal/api"
 	"github.com/pkg/errors"
 )
 
@@ -72,48 +73,48 @@ func handleAccessToken(accessToken string, credential interface{}, clientID stri
 
 func VerifyAuthentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		clientID := r.Header.Get("X-Client-ID")
-		if clientID == "" {
+		apiKey := r.Header.Get("x-api-key")
+		if apiKey == "" {
 			http.Error(w, "Invalid Request", http.StatusUnauthorized)
 			return
 		}
+		api.GetUserCredential(apiKey)
+		// res, err := services.AuthService.GetUserCredential(clientID)
+		// if err != nil {
+		// 	http.Error(w, "Not Found User", http.StatusNotFound)
+		// 	return
+		// }
 
-		user, err := services.UserService.FindByID(clientID)
-		if err != nil {
-			http.Error(w, "Not Found User", http.StatusNotFound)
-			return
-		}
+		// credential, err := services.AuthService.FindByID(user.Credential)
+		// if err != nil {
+		// 	http.Error(w, "Not Found Credential", http.StatusNotFound)
+		// 	return
+		// }
 
-		credential, err := services.CredentialService.FindByID(user.Credential)
-		if err != nil {
-			http.Error(w, "Not Found Credential", http.StatusNotFound)
-			return
-		}
+		// refreshToken := r.Header.Get("X-Refresh-Token")
+		// if refreshToken != "" {
+		// 	ctx, err := handleRefreshToken(refreshToken, credential, clientID)
+		// 	if err != nil {
+		// 		http.Error(w, err.Error(), http.StatusUnauthorized)
+		// 		return
+		// 	}
+		// 	r = r.WithContext(ctx)
+		// 	next.ServeHTTP(w, r)
+		// 	return
+		// }
 
-		refreshToken := r.Header.Get("X-Refresh-Token")
-		if refreshToken != "" {
-			ctx, err := handleRefreshToken(refreshToken, credential, clientID)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusUnauthorized)
-				return
-			}
-			r = r.WithContext(ctx)
-			next.ServeHTTP(w, r)
-			return
-		}
+		// accessToken := r.Header.Get("Authorization")
+		// if accessToken == "" {
+		// 	http.Error(w, "Invalid Request", http.StatusUnauthorized)
+		// 	return
+		// }
 
-		accessToken := r.Header.Get("Authorization")
-		if accessToken == "" {
-			http.Error(w, "Invalid Request", http.StatusUnauthorized)
-			return
-		}
-
-		ctx, err := handleAccessToken(accessToken, credential, clientID)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
-			return
-		}
-		r = r.WithContext(ctx)
+		// ctx, err := handleAccessToken(accessToken, credential, clientID)
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusUnauthorized)
+		// 	return
+		// }
+		// r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})
 }

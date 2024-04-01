@@ -7,6 +7,7 @@ import (
 	"net/url"
 
 	"github.com/go-chi/chi"
+	"github.com/lancer2672/Dandelion_Gateway/helper"
 	"github.com/lancer2672/Dandelion_Gateway/middleware"
 	"github.com/lancer2672/Dandelion_Gateway/utils"
 )
@@ -27,23 +28,24 @@ func main() {
 	if err != nil {
 		log.Fatal("Cannot load config", err)
 	}
-
+	helper.ConfigHttpClient(config)
 	Routes = []Route{
 		{"/notification/*", config.NotificationServiceAddress},
 		{"/movies/*", config.MovieGRPCAddress},
 		{"/api/auth/login", config.MainServiceAddress},
 		{"/api/auth/register", config.MainServiceAddress},
+		{"/api/auth/*", config.MainServiceAddress},
 		{"/*", config.MainServiceAddress},
 	}
-
+	api.GetUserCredential("123")
 	r := chi.NewRouter()
 
 	for _, route := range Routes {
 		var handler http.Handler
 
-		handler = middleware.CheckApiKey(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			forwardRequest(route.BackendURL, w, r)
-		}))
+		// handler = middleware.CheckApiKey(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// 	forwardRequest(route.BackendURL, w, r)
+		// }))
 
 		if utils.StringContains(noAuthRoutes, route.PathPrefix) {
 			log.Println("NoAuthRoute", route.PathPrefix)

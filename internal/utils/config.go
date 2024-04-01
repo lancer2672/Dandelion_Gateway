@@ -8,6 +8,9 @@ type Config struct {
 	MainServiceAddress         string `mapstructure:"MAIN_SERVICE_ADDR"`
 	MovieRESTAddress           string `mapstructure:"MOVIE_SERVICE_ADDR"`
 	MovieGRPCAddress           string `mapstructure:"MOVIE_SERVICE_GRPC_ADDR"`
+	GatewayApiKey              string `mapstructure:"GATEWAY_API_KEY"`
+	RequestLimitTimeUnit       string `mapstructure:"REQUEST_LIMIT_TIMEUNIT"`
+	RequestLimitPerTimeUnit    string `mapstructure:"REQUEST_LIMIT_PER_TIMEUNIT"`
 }
 
 // overrided by env if exists
