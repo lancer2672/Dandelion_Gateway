@@ -14,10 +14,10 @@ func ConfigServices() {
 		RedisPassword: utils.ConfigIns.RedisPassword,
 	}
 
-	connectRedis("default", redisConfig)
+	connectRedis(redisConfig)
 }
 
-func connectRedis(clientName string, redisConfig RedisConfig) {
+func connectRedis(redisConfig RedisConfig) {
 	redisClient = redis.NewClient(&redis.Options{
 		Addr:     redisConfig.RedisURL,
 		Password: redisConfig.RedisPassword,
