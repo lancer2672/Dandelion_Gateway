@@ -56,9 +56,9 @@ func (c *ClientHttp) Post(url, contentType string, body io.Reader) (r *http.Resp
 
 }
 
-func ConfigHttpClient(config utils.Config) error {
+func ConfigHttpClient() error {
 	options := make(map[string][]string)
-	options["x-gateway-key"] = []string{config.GatewayApiKey}
+	options["x-gateway-key"] = []string{utils.ConfigIns.GatewayApiKey}
 	HttpClient = newClientHttp(options)
 
 	return nil
