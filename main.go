@@ -36,7 +36,16 @@ func main() {
 		{"/api/auth/*", utils.ConfigIns.MainServiceAddress},
 		{"/*", utils.ConfigIns.MainServiceAddress},
 	}
+	r := setupRouter()
+	http.Handle("/", r)
+
+	http.ListenAndServe(utils.ConfigIns.GatewayAddress, nil)
+	log.Println("Server started at:", utils.ConfigIns.GatewayAddress)
+}
+
+func setupRouter() *chi.Mux {
 	r := chi.NewRouter()
+
 	r.Use(middleware.RequestLimitter)
 	for _, route := range Routes {
 		var handler http.Handler
@@ -52,13 +61,8 @@ func main() {
 
 		r.Handle(route.PathPrefix, handler)
 	}
-
-	http.Handle("/", r)
-
-	http.ListenAndServe(utils.ConfigIns.GatewayAddress, nil)
-	log.Println("Server started at:", utils.ConfigIns.GatewayAddress)
+	return r
 }
-
 func forwardRequest(target string, w http.ResponseWriter, r *http.Request) {
 	url, err := url.Parse(target)
 	log.Println("URL", url)
