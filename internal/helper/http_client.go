@@ -32,6 +32,7 @@ func (c *ClientHttp) Do(req *http.Request) (*http.Response, error) {
 	return c.Client.Do(req)
 }
 func (c *ClientHttp) Get(url string) (r *http.Response, err error) {
+
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -57,7 +58,7 @@ func (c *ClientHttp) Post(url, contentType string, body io.Reader) (r *http.Resp
 
 func ConfigHttpClient(config utils.Config) error {
 	options := make(map[string][]string)
-	options["X-Gateway-Key"] = []string{config.GatewayApiKey}
+	options["x-gateway-key"] = []string{config.GatewayApiKey}
 	HttpClient = newClientHttp(options)
 
 	return nil

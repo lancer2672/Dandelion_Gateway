@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"context"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -44,77 +43,61 @@ func verifyToken(accessToken string) (jwt.MapClaims, error) {
 	return claims, nil
 }
 
-func handleRefreshToken(refreshToken string, credential interface{}, clientID string) (context.Context, error) {
+func handleVerifyRefreshToken(refreshToken string, clientID string) error {
 	payload, err := verifyToken(refreshToken)
 
 	if err != nil || clientID != payload["userId"].(string) {
-		return nil, errors.New("Invalid Request")
+		return errors.New("Invalid Request")
 	}
-
-	ctx := context.WithValue(context.Background(), "credential", credential)
-	ctx = context.WithValue(ctx, "userId", clientID)
-	ctx = context.WithValue(ctx, "refreshToken", refreshToken)
-
-	return ctx, nil
+	return nil
 }
 
-func handleAccessToken(accessToken string, credential interface{}, clientID string) (context.Context, error) {
+func handleVerifyAccessToken(accessToken string, clientID string) error {
 	payload, err := verifyToken(accessToken)
 
 	if err != nil || clientID != payload["userId"].(string) {
-		return nil, errors.New("Invalid Request")
+		return errors.New("Invalid Request")
 	}
 
-	ctx := context.WithValue(context.Background(), "credential", credential)
-	ctx = context.WithValue(ctx, "userId", clientID)
-
-	return ctx, nil
+	return nil
 }
 
 func VerifyAuthentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		apiKey := r.Header.Get("x-api-key")
-		if apiKey == "" {
+		userId := r.Header.Get("x-client-id")
+		if userId == "" {
 			http.Error(w, "Invalid Request", http.StatusUnauthorized)
 			return
 		}
-		api.GetUserCredential(apiKey)
-		// res, err := services.AuthService.GetUserCredential(clientID)
-		// if err != nil {
-		// 	http.Error(w, "Not Found User", http.StatusNotFound)
-		// 	return
-		// }
+		//check user credential is exist
+		_, err := api.GetUserCredential(userId)
+		if err != nil {
+			http.Error(w, "Server Error", http.StatusInternalServerError)
+		}
 
-		// credential, err := services.AuthService.FindByID(user.Credential)
-		// if err != nil {
-		// 	http.Error(w, "Not Found Credential", http.StatusNotFound)
-		// 	return
-		// }
+		refreshToken := r.Header.Get("x-refresh-token")
+		//if this request is token refresh request then let it pass
+		if refreshToken != "" {
+			err := handleVerifyRefreshToken(refreshToken, userId)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusUnauthorized)
+				return
+			}
+			next.ServeHTTP(w, r)
+			return
+		}
 
-		// refreshToken := r.Header.Get("X-Refresh-Token")
-		// if refreshToken != "" {
-		// 	ctx, err := handleRefreshToken(refreshToken, credential, clientID)
-		// 	if err != nil {
-		// 		http.Error(w, err.Error(), http.StatusUnauthorized)
-		// 		return
-		// 	}
-		// 	r = r.WithContext(ctx)
-		// 	next.ServeHTTP(w, r)
-		// 	return
-		// }
+		accessToken := r.Header.Get("Authorization")
+		if accessToken == "" {
+			http.Error(w, "Invalid Request", http.StatusUnauthorized)
+			return
+		}
 
-		// accessToken := r.Header.Get("Authorization")
-		// if accessToken == "" {
-		// 	http.Error(w, "Invalid Request", http.StatusUnauthorized)
-		// 	return
-		// }
-
-		// ctx, err := handleAccessToken(accessToken, credential, clientID)
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusUnauthorized)
-		// 	return
-		// }
-		// r = r.WithContext(ctx)
+		err = handleVerifyAccessToken(accessToken, userId)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
 		next.ServeHTTP(w, r)
 	})
 }

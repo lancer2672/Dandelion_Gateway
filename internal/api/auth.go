@@ -1,31 +1,30 @@
 package api
 
 import (
-	"fmt"
+	"encoding/json"
+	"io"
 
 	"github.com/lancer2672/Dandelion_Gateway/internal/constants"
 	"github.com/lancer2672/Dandelion_Gateway/internal/helper"
 )
 
-func GetUserCredential(apikey string) (user map[string]string, credential map[string]string, err error) {
+func GetUserCredential(userId string) (data map[string]any, err error) {
 	err = helper.RetryHandler(func() error {
-
-		resp, err := helper.HttpClient.Get(constants.AUTH_PATH + "checkapikey?apikey=" + apikey)
+		resp, err := helper.HttpClient.Get(constants.AUTH_PATH + "credential/" + userId)
 		if err != nil {
 			return err
 		}
 		defer resp.Body.Close()
-		fmt.Println("resp", resp)
-		// var result struct {
-		// 	Role       Role
-		// 	Permission Permission
-		// }
-		// err = json.NewDecoder(resp.Body).Decode(&result)
-		// if err != nil {
-		// 	return nil
-		// }
-		// role = &result.Role
-		// permission = &result.Permission
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+		var responseData map[string]interface{}
+		err = json.Unmarshal(body, &responseData)
+		if err != nil {
+			return err
+		}
+		data = responseData["data"].(map[string]any)
 		return nil
 	})
 	return

@@ -1,6 +1,6 @@
 package constants
 
 const (
-	AUTH_PATH        = "http://localhost:8080/"
+	AUTH_PATH        = "http://localhost:3000/"
 	CALL_RETRY_TIMES = 3
 )

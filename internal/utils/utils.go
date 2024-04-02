@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"log"
 	"strings"
 )
 
@@ -11,6 +10,5 @@ func StringContains(s []string, str string) bool {
 			return true
 		}
 	}
-	log.Println("String contains FALSE", s, str)
 	return false
 }

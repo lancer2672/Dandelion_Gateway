@@ -11,6 +11,9 @@ type Config struct {
 	GatewayApiKey              string `mapstructure:"GATEWAY_API_KEY"`
 	RequestLimitTimeUnit       string `mapstructure:"REQUEST_LIMIT_TIMEUNIT"`
 	RequestLimitPerTimeUnit    string `mapstructure:"REQUEST_LIMIT_PER_TIMEUNIT"`
+	RedisURL                   string `mapstructure:"REDIS_URL"`
+	RedisUsername              string `mapstructure:"REDIS_USERNAME"`
+	RedisPassword              string `mapstructure:"REDIS_PASSWORD"`
 }
 
 // overrided by env if exists
