@@ -7,9 +7,10 @@ import (
 	"net/url"
 
 	"github.com/go-chi/chi"
-	"github.com/lancer2672/Dandelion_Gateway/helper"
-	"github.com/lancer2672/Dandelion_Gateway/middleware"
-	"github.com/lancer2672/Dandelion_Gateway/utils"
+	"github.com/lancer2672/Dandelion_Gateway/internal/helper"
+	"github.com/lancer2672/Dandelion_Gateway/internal/middleware"
+	"github.com/lancer2672/Dandelion_Gateway/internal/utils"
+	"github.com/lancer2672/Dandelion_Gateway/services"
 )
 
 type Route struct {
@@ -24,32 +25,29 @@ var noAuthRoutes = []string{
 }
 
 func main() {
-	config, err := utils.LoadConfig(".")
-	if err != nil {
-		log.Fatal("Cannot load config", err)
-	}
-	helper.ConfigHttpClient(config)
+	utils.LoadConfig(".")
+	helper.ConfigHttpClient()
+	services.ConfigServices()
 	Routes = []Route{
-		{"/notification/*", config.NotificationServiceAddress},
-		{"/movies/*", config.MovieGRPCAddress},
-		{"/api/auth/login", config.MainServiceAddress},
-		{"/api/auth/register", config.MainServiceAddress},
-		{"/api/auth/*", config.MainServiceAddress},
-		{"/*", config.MainServiceAddress},
+		{"/notification/*", utils.ConfigIns.NotificationServiceAddress},
+		{"/movies/*", utils.ConfigIns.MovieGRPCAddress},
+		{"/api/auth/login", utils.ConfigIns.MainServiceAddress},
+		{"/api/auth/register", utils.ConfigIns.MainServiceAddress},
+		{"/api/auth/*", utils.ConfigIns.MainServiceAddress},
+		{"/*", utils.ConfigIns.MainServiceAddress},
 	}
-	api.GetUserCredential("123")
 	r := chi.NewRouter()
-
+	r.Use(middleware.RequestLimitter)
 	for _, route := range Routes {
 		var handler http.Handler
 
-		// handler = middleware.CheckApiKey(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 	forwardRequest(route.BackendURL, w, r)
-		// }))
+		handler = (http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			forwardRequest(route.BackendURL, w, r)
+		}))
 
 		if utils.StringContains(noAuthRoutes, route.PathPrefix) {
 			log.Println("NoAuthRoute", route.PathPrefix)
-			handler = middleware.VerifyToken(handler)
+			handler = (middleware.VerifyAuthentication(handler))
 		}
 
 		r.Handle(route.PathPrefix, handler)
@@ -57,8 +55,8 @@ func main() {
 
 	http.Handle("/", r)
 
-	http.ListenAndServe(config.GatewayAddress, nil)
-	log.Println("Server started at:", config.GatewayAddress)
+	http.ListenAndServe(utils.ConfigIns.GatewayAddress, nil)
+	log.Println("Server started at:", utils.ConfigIns.GatewayAddress)
 }
 
 func forwardRequest(target string, w http.ResponseWriter, r *http.Request) {

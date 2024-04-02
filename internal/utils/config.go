@@ -24,7 +24,7 @@ type Config struct {
 var ConfigIns Config
 
 // overrided by env if exists
-func LoadConfig(path string) (config Config) {
+func LoadConfig(path string) {
 	viper.AddConfigPath(path)
 	viper.SetConfigName("dev")
 	viper.AutomaticEnv()
@@ -33,6 +33,9 @@ func LoadConfig(path string) (config Config) {
 	if err != nil {
 		log.Fatal("Cannot load config", err)
 	}
-	// err = viper.Unmarshal(&config)
+	err = viper.Unmarshal(&ConfigIns)
+	if err != nil {
+		log.Fatal("Cannot load config", err)
+	}
 	return
 }
